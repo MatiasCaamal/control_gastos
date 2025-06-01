@@ -1,3 +1,4 @@
+import 'package:control_gastos/pages/longin.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
@@ -13,17 +14,20 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
   final List<Map<String, String>> onboardingData = [
     {
       "title": "Controla tus gastos fácilmente",
-      "description": "Registra y clasifica todos tus gastos diarios en un solo lugar.",
+      "description":
+          "Registra y clasifica todos tus gastos diarios en un solo lugar.",
       "animation": "assets/animations/bills.json",
     },
     {
       "title": "Visualiza tus reportes",
-      "description": "Obtén gráficos y resúmenes para entender mejor tus finanzas.",
+      "description":
+          "Obtén gráficos y resúmenes para entender mejor tus finanzas.",
       "animation": "assets/animations/reports.json",
     },
     {
       "title": "Modelo Freemium",
-      "description": "Accede a funciones básicas gratis y mejora con la versión premium.",
+      "description":
+          "Accede a funciones básicas gratis y mejora con la versión premium.",
       "animation": "assets/animations/premium.json",
     },
   ];
@@ -50,7 +54,8 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                       builder: (context, constraints) {
                         return SingleChildScrollView(
                           child: ConstrainedBox(
-                            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                            constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -62,13 +67,16 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
                                 SizedBox(height: 40),
                                 Text(
                                   onboardingData[index]["title"]!,
-                                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold),
                                   textAlign: TextAlign.center,
                                 ),
                                 SizedBox(height: 20),
                                 Text(
                                   onboardingData[index]["description"]!,
-                                  style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.grey[700]),
                                   textAlign: TextAlign.center,
                                 ),
                               ],
@@ -101,21 +109,30 @@ class _OnBoardingScreenState extends State<OnBoardingScreen> {
 
             // Botón Siguiente / Empezar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   minimumSize: Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () {
                   if (_currentIndex < onboardingData.length - 1) {
-                    _pageController.nextPage(duration: Duration(milliseconds: 500), curve: Curves.ease);
+                    _pageController.nextPage(
+                        duration: Duration(milliseconds: 500),
+                        curve: Curves.ease);
                   } else {
-                    Navigator.pushReplacementNamed(context, '/home');
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginScreen()),
+                    );
                   }
                 },
                 child: Text(
-                  _currentIndex == onboardingData.length - 1 ? 'Empezar' : 'Siguiente',
+                  _currentIndex == onboardingData.length - 1
+                      ? 'Empezar'
+                      : 'Siguiente',
                   style: TextStyle(fontSize: 18),
                 ),
               ),
