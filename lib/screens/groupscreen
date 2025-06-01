@@ -1,0 +1,182 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
+class GroupScreen extends StatefulWidget {
+  const GroupScreen({Key? key}) : super(key: key);
+
+  @override
+  State<GroupScreen> createState() => _GroupScreenState();
+}
+
+class _GroupScreenState extends State<GroupScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  final TextEditingController _groupNameController = TextEditingController();
+  final TextEditingController _memberNameController = TextEditingController();
+  final TextEditingController _memberSalaryController = TextEditingController();
+
+  String? _groupId;
+  List<Map<String, dynamic>> _members = [];
+
+  @override
+  void dispose() {
+    _groupNameController.dispose();
+    _memberNameController.dispose();
+    _memberSalaryController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _createGroup() async {
+    if (_groupNameController.text.isEmpty) return;
+
+    final groupDoc = await _firestore.collection('groups').add({
+      'name': _groupNameController.text.trim(),
+      'ownerId': _auth.currentUser!.uid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    setState(() {
+      _groupId = groupDoc.id;
+    });
+
+    _showMessage('Grupo creado exitosamente');
+  }
+
+  Future<void> _addMember() async {
+    if (_memberNameController.text.isEmpty ||
+        _memberSalaryController.text.isEmpty ||
+        _groupId == null) return;
+
+    final salary = double.tryParse(_memberSalaryController.text);
+    if (salary == null) {
+      _showMessage('Salario inválido');
+      return;
+    }
+
+    final member = {
+      'name': _memberNameController.text.trim(),
+      'salary': salary,
+    };
+
+    await _firestore
+        .collection('groups')
+        .doc(_groupId)
+        .collection('members')
+        .add(member);
+
+    setState(() {
+      _members.add(member);
+      _memberNameController.clear();
+      _memberSalaryController.clear();
+    });
+
+    _showMessage('Miembro agregado');
+  }
+
+  double get totalSalary =>
+      _members.fold(0, (sum, member) => sum + (member['salary'] as double));
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Grupos Compartidos'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Crear grupo
+            TextField(
+              controller: _groupNameController,
+              decoration: InputDecoration(
+                labelText: 'Nombre del grupo',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: _createGroup,
+              child: Text('Crear grupo'),
+            ),
+
+            Divider(height: 32),
+
+            if (_groupId != null) ...[
+              Text('Agregar integrante al grupo'),
+              TextField(
+                controller: _memberNameController,
+                decoration: InputDecoration(
+                  labelText: 'Nombre del integrante',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 8),
+              TextField(
+                controller: _memberSalaryController,
+                keyboardType:
+                    TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                  labelText: 'Salario',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 8),
+              ElevatedButton(
+                onPressed: _addMember,
+                child: Text('Agregar integrante'),
+              ),
+              SizedBox(height: 16),
+
+              Text('Integrantes:'),
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _firestore
+                      .collection('groups')
+                      .doc(_groupId)
+                      .collection('members')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+
+                    final docs = snapshot.data!.docs;
+                    _members = docs
+                        .map((doc) => {
+                              'name': doc['name'],
+                              'salary': doc['salary'],
+                            })
+                        .toList();
+
+                    return ListView.builder(
+                      itemCount: _members.length,
+                      itemBuilder: (context, index) {
+                        final member = _members[index];
+                        return ListTile(
+                          title: Text(member['name']),
+                          subtitle:
+                              Text('Salario: \$${member['salary'].toStringAsFixed(2)}'),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+
+              Text('Salario total: \$${totalSalary.toStringAsFixed(2)}'),
+              // Aquí podrías agregar el cálculo para gastos equilibrados según salarios
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMessage(String msg) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
+  }
+}
